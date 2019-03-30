@@ -12,12 +12,14 @@ defmodule Pishpirik.Deck do
     |> Enum.shuffle()
   end
 
-  def deal(cards) do
-    hand = Enum.take_random(cards, 26)
-
-    computer =
-      (cards -- hand)
-      |> Enum.map(&to_tuple/1)
+  def deal(new_state, cards) do
+    user_cards = Enum.take_random(cards, 4)
+    computer_cards = Enum.take_random(cards -- user_cards, 4)
+    Map.merge(new_state, %{
+      user_cards: user_cards,
+      computer_cards: computer_cards,
+      cards: (cards -- user_cards) -- computer_cards
+      })
   end
 
   defp to_tuple(%Deck.Card{value: value, suit: suit}),

@@ -131,14 +131,8 @@ defmodule Pishpirik.Server do
               table_cards ++ [{this_card, this_card_suit}, {computer_card, computer_card_suit}]
           })
 
-          new_state = if user_cards -- [{this_card, this_card_suit}] == [] do
-            user_cards = Enum.take_random(cards, 4)
-            computer_cards = Enum.take_random(cards -- user_cards, 4)
-            Map.merge(new_state, %{
-              user_cards: user_cards,
-              computer_cards: computer_cards,
-              cards: (cards -- user_cards) -- computer_cards
-            })
+          if user_cards -- [{this_card, this_card_suit}] == [] do
+            Deck.deal(new_state, cards)
           else
               new_state
           end
@@ -154,16 +148,10 @@ defmodule Pishpirik.Server do
             user_earned_cards: table_cards ++ [{this_card, this_card_suit}]
           })
 
-          # Logger.debug "new state 1 --> #{inspect new_state}"
-
-          new_state = if user_cards == [] do
-            user_cards = Enum.take_random(cards, 4)
-            Map.merge(new_state, %{
-              user_cards: user_cards,
-              computer_cards: Enum.take_random(cards -- user_cards, 4)
-            })
+          if user_cards -- [{this_card, this_card_suit}] == [] do
+            Deck.deal(new_state, cards)
           else
-            new_state
+              new_state
           end
 
         {:reply, "Round won by user!", new_state}
