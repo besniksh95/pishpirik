@@ -6,7 +6,7 @@ defmodule Pishpirik.Server do
 
   def start_link(id) do
     Logger.debug("Server start_link(id) here")
-    GenServer.start_link(__MODULE__, :ok, name: @name)
+    GenServer.start_link(__MODULE__, :ok, [@name, id])
   end
 
   def battle(pid, this_card) do
@@ -61,7 +61,7 @@ defmodule Pishpirik.Server do
   end
 
   def handle_call(
-        :battle,
+        {:battle, _this_card},
         _from,
         %Game{
           user_cards: []
@@ -93,6 +93,7 @@ defmodule Pishpirik.Server do
           computer_cards: [{computer_card, computer_card_suit} | computer_cards_rest],
           table_cards: table_cards,
           user_earned_cards: user_earned_cards,
+          computer_earned_cards: computer_earned_cards,
           cards: cards
         } = state
       ) do
@@ -100,20 +101,17 @@ defmodule Pishpirik.Server do
     Logger.debug("user_earned_cards ---> #{inspect(user_earned_cards)}")
     Logger.debug("cards ---> #{inspect(cards)}")
 
-    # Logger.debug "computer_cards --> #{inspect [{computer_card, computer_card_suit}] ++ [computer_cards_rest]}"
-
-    if not Enum.member?(user_cards, this_card) do
-      Logger.debug("MORE HAJDUT")
-    end
-
     Logger.debug("this_card => #{inspect(this_card)}")
     Logger.debug("user_cards => #{inspect(user_cards)}")
 
-    table_card = List.last(table_cards)
-    Logger.debug("table_card => #{inspect(table_card)}")
+    table_card = if table_cards != [] do
+      table_card = List.last(table_cards)
+      {table_card, _table_card_suit} = table_card
+      table_card
+    end
 
     {this_card, this_card_suit} = this_card
-    {table_card, _table_card_suit} = table_card
+
 
     Logger.debug("this_card -> #{inspect(this_card)}")
 
@@ -122,16 +120,47 @@ defmodule Pishpirik.Server do
     end
 
     cond do
+      Enum.member?(user_cards, this_card) == false ->
+        {:noreply, "Continue!", state}
+
+      table_card == nil ->
+        # Add Card when Table is empty
+        new_state =
+          Map.merge(state, %{
+            table_cards: [{this_card, this_card_suit}, {computer_card, computer_card_suit}]
+          })
+
+          new_state= if user_cards -- [{this_card, this_card_suit}] == [] do
+            Deck.deal(new_state, cards)
+          else
+              new_state
+          end
+
+        {:reply, "Continue!", new_state}
+
+
       this_card != table_card ->
+        # Add Card when last card is not same as user card
         new_state =
           Map.merge(state, %{
             user_cards: user_cards -- [{this_card, this_card_suit}],
             computer_cards: computer_cards_rest,
             table_cards:
-              table_cards ++ [{this_card, this_card_suit}, {computer_card, computer_card_suit}]
+            table_cards ++ [{this_card, this_card_suit}, {computer_card, computer_card_suit}],
+            computer_earned_cards: computer_earned_cards
           })
 
-          if user_cards -- [{this_card, this_card_suit}] == [] do
+          new_state = if this_card == computer_card do
+            Map.merge(new_state, %{
+              user_cards: user_cards -- [{this_card, this_card_suit}],
+              computer_cards: computer_cards_rest,
+              computer_earned_cards: table_cards ++ [{this_card, this_card_suit}, {computer_card, computer_card_suit}],
+              table_cards: []
+            })
+          else
+            new_state
+          end
+          new_state= if user_cards -- [{this_card, this_card_suit}] == [] do
             Deck.deal(new_state, cards)
           else
               new_state
@@ -140,6 +169,8 @@ defmodule Pishpirik.Server do
         {:reply, "Continue!", new_state}
 
       this_card == table_card ->
+        # User card is equal with last table card
+        # User earn all cards from table
         new_state =
           Map.merge(state, %{
             user_cards: user_cards -- [{this_card, this_card_suit}],
@@ -148,7 +179,7 @@ defmodule Pishpirik.Server do
             user_earned_cards: table_cards ++ [{this_card, this_card_suit}]
           })
 
-          if user_cards -- [{this_card, this_card_suit}] == [] do
+          new_state = if user_cards -- [{this_card, this_card_suit}] == [] do
             Deck.deal(new_state, cards)
           else
               new_state
@@ -156,5 +187,14 @@ defmodule Pishpirik.Server do
 
         {:reply, "Round won by user!", new_state}
     end
+  end
+
+  def stop(pid) do
+    GenServer.call(pid, :stop)
+  end
+
+  def terminate(reason, _status) do
+    IO.puts "Asked to stop because #{inspect reason}"
+    :ok
   end
 end
