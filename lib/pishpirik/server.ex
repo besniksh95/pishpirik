@@ -4,8 +4,8 @@ defmodule Pishpirik.Server do
   @name __MODULE__
   require Logger
 
-  def start_link(id) do
-    GenServer.start_link(__MODULE__, :ok, [name: @name, id: id])
+  def start_link do
+    GenServer.start_link(__MODULE__, [])
   end
 
   def battle(pid, this_card) do
@@ -17,7 +17,7 @@ defmodule Pishpirik.Server do
     GenServer.call(pid, :read)
   end
 
-  def init(:ok) do
+  def init(list) do
     Logger.debug("Server init(:ok)")
     {:ok, load()}
   end

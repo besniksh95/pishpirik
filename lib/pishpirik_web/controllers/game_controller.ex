@@ -12,7 +12,7 @@ defmodule PishpirikWeb.GameController do
   def new(conn, _params) do
     Logger.debug("CONN battle ---> #{inspect(conn)}")
 
-    case Game.new(Enum.random(1..100)) do
+    case Game.new() do
       {:ok, pid} ->
         %Game{
           user_cards: user_cards,

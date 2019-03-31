@@ -11,7 +11,7 @@ defmodule Pishpirik.Game do
             status: :uninitialized,
             cards: []
 
-  def new(id) do
-    Server.start_link(id)
+  def new() do
+    Server.start_link()
   end
 end
