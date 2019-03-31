@@ -17,6 +17,8 @@ defmodule PishpirikWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    get "/game/new", GameController, :new
+    get "/battle", GameController, :battle
   end
 
   # Other scopes may use custom stacks.

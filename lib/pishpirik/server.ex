@@ -5,8 +5,7 @@ defmodule Pishpirik.Server do
   require Logger
 
   def start_link(id) do
-    Logger.debug("Server start_link(id) here")
-    GenServer.start_link(__MODULE__, :ok, [@name, id])
+    GenServer.start_link(__MODULE__, :ok, [name: @name, id: id])
   end
 
   def battle(pid, this_card) do
@@ -120,8 +119,8 @@ defmodule Pishpirik.Server do
     end
 
     cond do
-      Enum.member?(user_cards, this_card) == false ->
-        {:noreply, "Continue!", state}
+      # Enum.member?(user_cards, this_card) == false ->
+      #   {:noreply, "Continue!", state}
 
       table_card == nil ->
         # Add Card when Table is empty
@@ -154,7 +153,7 @@ defmodule Pishpirik.Server do
             Map.merge(new_state, %{
               user_cards: user_cards -- [{this_card, this_card_suit}],
               computer_cards: computer_cards_rest,
-              computer_earned_cards: table_cards ++ [{this_card, this_card_suit}, {computer_card, computer_card_suit}],
+              computer_earned_cards: computer_earned_cards ++ table_cards ++ [{this_card, this_card_suit}, {computer_card, computer_card_suit}],
               table_cards: []
             })
           else
@@ -176,7 +175,7 @@ defmodule Pishpirik.Server do
             user_cards: user_cards -- [{this_card, this_card_suit}],
             computer_cards: computer_cards_rest,
             table_cards: [{computer_card, computer_card_suit}],
-            user_earned_cards: table_cards ++ [{this_card, this_card_suit}]
+            user_earned_cards: user_earned_cards ++ table_cards ++ [{this_card, this_card_suit}]
           })
 
           new_state = if user_cards -- [{this_card, this_card_suit}] == [] do
@@ -187,14 +186,5 @@ defmodule Pishpirik.Server do
 
         {:reply, "Round won by user!", new_state}
     end
-  end
-
-  def stop(pid) do
-    GenServer.call(pid, :stop)
-  end
-
-  def terminate(reason, _status) do
-    IO.puts "Asked to stop because #{inspect reason}"
-    :ok
   end
 end

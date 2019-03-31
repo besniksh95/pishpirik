@@ -1,0 +1,36 @@
+<h3>User Points: <%= @user_points %> </h3>
+<h3>Computer Points: <%= @computer_points %> </h3>
+
+<h3>Computer Cards</h3>
+<div class="row">
+<%= for card <- @computer_cards do %>
+    <div class="m-auto">
+        <div style="width: 150px">
+            <%= img_tag "/images/playing_cards/card-back.png", style: "width: 100px" %>
+        </div>
+    </div>
+<% end %>
+</div>
+
+<h3>Table</h3>
+<div class="row">
+    <div class="m-auto">
+        <%= if List.last(@table_cards) do %>
+            <%= img_tag render_card(List.last(@table_cards)), style: "width: 100px" %> 
+        <% end%>
+    </div>
+</div>
+
+
+<h3>My Cards</h3>
+<div class="row">
+<%= for card <- @user_cards do %>
+    <div class="m-auto">
+        <div style="width: 150px">
+        <%= img_tag render_card(card), style: "width: 100px" %>
+        <% {value, suit} = card %>
+        <%= link "Throw", to: Routes.game_path(@conn, :battle, value: value, suit: suit), class: "btn btn-primary mt-10"%>
+        </div>
+    </div>
+<% end %>
+</div>
